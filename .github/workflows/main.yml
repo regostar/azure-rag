@@ -16,6 +16,7 @@ on:
 
 jobs:
   build:
+    environment: azure1
     runs-on: ubuntu-latest
 
     steps:
@@ -41,6 +42,33 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.REPO }}:${{ github.sha }}
           file: ./Dockerfile
+
+
+  credential_check:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check if AZURE_CREDENTIALS secret is present
+      - name: Check if AZURE_CREDENTIALS is set
+        run: |
+          if [ -z "${{ secrets.AZURE_CREDENTIALS }}" ]; then
+            echo "AZURE_CREDENTIALS secret is not set!"
+            exit 1
+          else
+            echo "AZURE_CREDENTIALS secret is present."
+          fi
+
+      # Step 2: Login to Azure using the provided credentials
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Step 3: Verify Azure login by listing the current account details
+      - name: Verify Azure Credentials
+        run: |
+          echo "Listing Azure account information..."
+          az account show
+
 
   deploy:
     runs-on: ubuntu-latest
